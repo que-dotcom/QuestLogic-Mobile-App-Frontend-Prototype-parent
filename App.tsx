@@ -9,6 +9,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SettingScreen from './src/screens/SettingScreen';
 import CustomTabBar from './src/components/common/CustomTabBar';
+import NetworkErrorOverlay from './src/components/common/NetworkErrorOverlay';
 
 export type RootTabParamList = {
   Home: undefined;
@@ -64,6 +65,13 @@ export default function App() {
             <Tab.Screen name="Setting" component={SettingScreen} />
           </Tab.Navigator>
         </NavigationContainer>
+
+        {/*
+         * ネットワークエラーオーバーレイ。
+         * AppProvider の内側 / NavigationContainer の外側に配置することで
+         * ナビゲーション・タブバーを含む全要素の上に表示される。
+         */}
+        <NetworkErrorOverlay />
       </SafeAreaProvider>
     </AppProvider>
   );

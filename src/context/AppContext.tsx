@@ -13,6 +13,23 @@ interface AppContextValue {
   /** ダークモードフラグ。ONで背景・文字色を反転 */
   isDarkMode: boolean;
   setIsDarkMode: (v: boolean) => void;
+  /**
+   * 毎日のゲーム基準時間（分）。バックエンドで永続化する想定。
+   * remainingTime とは独立した「1日の上限設定値」。
+   */
+  baseGameTime: number;
+  setBaseGameTime: (minutes: number) => void;
+  /**
+   * 毎日のスマホ基準時間（分）。バックエンドで永続化する想定。
+   */
+  baseSmartphoneTime: number;
+  setBaseSmartphoneTime: (minutes: number) => void;
+  /**
+   * ネットワークエラーフラグ。
+   * true のときフルスクリーンロックオーバーレイを表示する。
+   */
+  isNetworkError: boolean;
+  setIsNetworkError: (v: boolean) => void;
 }
 
 // ─── Context 作成 ─────────────────────────────────────────────────────────────
@@ -24,6 +41,12 @@ const AppContext = createContext<AppContextValue>({
   setChildName: () => {},
   isDarkMode: false,
   setIsDarkMode: () => {},
+  baseGameTime: 60,
+  setBaseGameTime: () => {},
+  baseSmartphoneTime: 60,
+  setBaseSmartphoneTime: () => {},
+  isNetworkError: false,
+  setIsNetworkError: () => {},
 });
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -40,10 +63,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userName, setUserName] = useState<string>('○○');
   const [childName, setChildName] = useState<string>('○○');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [baseGameTime, setBaseGameTime] = useState<number>(60);
+  const [baseSmartphoneTime, setBaseSmartphoneTime] = useState<number>(60);
+  const [isNetworkError, setIsNetworkError] = useState<boolean>(false);
 
   return (
     <AppContext.Provider
-      value={{ userName, setUserName, childName, setChildName, isDarkMode, setIsDarkMode }}
+      value={{
+        userName, setUserName,
+        childName, setChildName,
+        isDarkMode, setIsDarkMode,
+        baseGameTime, setBaseGameTime,
+        baseSmartphoneTime, setBaseSmartphoneTime,
+        isNetworkError, setIsNetworkError,
+      }}
     >
       {children}
     </AppContext.Provider>

@@ -18,6 +18,7 @@ import GameManagementContent from '../components/home/sections/GameManagementCon
 import HomeworkContent from '../components/home/sections/HomeworkContent';
 import ConfirmModal from '../components/home/modals/ConfirmModal';
 import ExtendTimeModal from '../components/home/modals/ExtendTimeModal';
+import BaseTimeModal from '../components/home/modals/BaseTimeModal';
 
 // ─── アイコン画像 ──────────────────────────────────────────────────────────────
 // Figma からエクスポートされた PNG（asset/home/images/ に配置済み）
@@ -57,14 +58,20 @@ const INITIAL_HOMEWORK_IMAGES: HomeworkImage[] = [
 ];
 
 // ─── モーダル種別 ──────────────────────────────────────────────────────────────
-type ModalType = 'none' | 'forceLock' | 'unlock' | 'extendTime';
+type ModalType = 'none' | 'forceLock' | 'unlock' | 'extendTime' | 'baseGame' | 'baseSmart';
 
 // ─── コンポーネント ────────────────────────────────────────────────────────────
 const HomeScreen: React.FC = () => {
   // ── グローバルステート ──
-  // userName: 親の名前（Setting 画面で変更 → 「ようこそ、{userName}さん」に反映）
-  // childName: 子供の名前（タスク・ゲーム管理など子供関連ラベルに使用）
-  const { userName, childName } = useAppContext();
+  // userName: 親の名前 / childName: 子供の名前 / baseXxxTime: 毎日の基準時間
+  const {
+    userName,
+    childName,
+    baseGameTime,
+    setBaseGameTime,
+    baseSmartphoneTime,
+    setBaseSmartphoneTime,
+  } = useAppContext();
   const theme = useTheme();
 
   // ── 静的データ (API 取得後に setState で更新) ──
@@ -109,6 +116,17 @@ const HomeScreen: React.FC = () => {
     closeModal();
   };
 
+  // ── ベース時間設定ハンドラ ──
+  const handleBaseGameTimeConfirm = (minutes: number) => {
+    setBaseGameTime(minutes);
+    closeModal();
+  };
+
+  const handleBaseSmartTimeConfirm = (minutes: number) => {
+    setBaseSmartphoneTime(minutes);
+    closeModal();
+  };
+
   // ── レンダリング ──
   return (
     <SafeAreaView
@@ -145,6 +163,8 @@ const HomeScreen: React.FC = () => {
             onForceLockPress={() => setActiveModal('forceLock')}
             onUnlockPress={() => setActiveModal('unlock')}
             onExtendTimePress={() => setActiveModal('extendTime')}
+            onEditGameBaseTimePress={() => setActiveModal('baseGame')}
+            onEditSmartBaseTimePress={() => setActiveModal('baseSmart')}
           />
         </AccordionSection>
 
@@ -183,6 +203,24 @@ const HomeScreen: React.FC = () => {
         visible={activeModal === 'extendTime'}
         childName={childName}
         onConfirm={handleExtendTimeConfirm}
+        onCancel={closeModal}
+      />
+
+      {/* ゲーム基準時間設定 */}
+      <BaseTimeModal
+        visible={activeModal === 'baseGame'}
+        title="一日のゲーム制限時間の変更"
+        initialMinutes={baseGameTime}
+        onConfirm={handleBaseGameTimeConfirm}
+        onCancel={closeModal}
+      />
+
+      {/* スマホ基準時間設定 */}
+      <BaseTimeModal
+        visible={activeModal === 'baseSmart'}
+        title="一日のスマホ制限時間の変更"
+        initialMinutes={baseSmartphoneTime}
+        onConfirm={handleBaseSmartTimeConfirm}
         onCancel={closeModal}
       />
     </SafeAreaView>

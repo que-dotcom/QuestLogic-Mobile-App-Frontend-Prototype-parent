@@ -55,7 +55,7 @@ const NOTE_FOCUS =
 // ─── メインコンポーネント ─────────────────────────────────────────────────────
 
 const SettingScreen: React.FC = () => {
-  const { userName, setUserName, isDarkMode, setIsDarkMode } = useAppContext();
+  const { userName, setUserName, isDarkMode, setIsDarkMode, setIsNetworkError } = useAppContext();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const { requestAndTest, cancelAll } = useNotification();
 
@@ -425,6 +425,21 @@ const SettingScreen: React.FC = () => {
         </View>
 
         {/* ══════════════════════════════════════════════════════════════
+            デバッグ: ネットワークエラー画面テスト
+            ※ 本番リリース前に削除すること
+        ══════════════════════════════════════════════════════════════ */}
+        <View style={[styles.debugRow, dynamicStyles.separator]}>
+          <TouchableOpacity
+            onPress={() => setIsNetworkError(true)}
+            style={styles.debugButton}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="wifi-outline" size={16} color="#FC2865" />
+            <Text style={styles.debugLabel}>エラー画面をテストする</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ══════════════════════════════════════════════════════════════
             ログアウト
         ══════════════════════════════════════════════════════════════ */}
         <View style={[styles.logoutRow, dynamicStyles.separator]}>
@@ -548,6 +563,29 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
+  },
+
+  // ── デバッグ行 ──
+  debugRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  debugButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#FC2865',
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  debugLabel: {
+    fontSize: 13,
+    color: '#FC2865',
+    letterSpacing: 0.26,
   },
 
   // ── ログアウト行 ──

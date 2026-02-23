@@ -23,6 +23,10 @@ interface GameManagementContentProps {
   onForceLockPress: () => void;
   onUnlockPress: () => void;
   onExtendTimePress: () => void;
+  /** ゲーム基準時間変更モーダルを開くコールバック */
+  onEditGameBaseTimePress: () => void;
+  /** スマホ基準時間変更モーダルを開くコールバック */
+  onEditSmartBaseTimePress: () => void;
 }
 
 /** アコーディオン「スマホ・ゲーム管理」の展開コンテンツ */
@@ -34,21 +38,25 @@ const GameManagementContent: React.FC<GameManagementContentProps> = ({
   onForceLockPress,
   onUnlockPress,
   onExtendTimePress,
+  onEditGameBaseTimePress,
+  onEditSmartBaseTimePress,
 }) => {
   return (
     <View style={styles.container}>
-      {/* ゲーム残り時間通知カード (BellRinging.png アイコン) */}
+      {/* ゲーム残り時間通知カード（ペンアイコンでベース時間変更） */}
       <NotificationCard
         iconSource={ICON_BELL}
         label={`${childName}のゲーム制限時間`}
         remainingMinutes={gameRemainingMinutes}
+        onEditPress={onEditGameBaseTimePress}
       />
 
-      {/* スマホ残り時間通知カード (BellRinging.png アイコン) */}
+      {/* スマホ残り時間通知カード（ペンアイコンでベース時間変更） */}
       <NotificationCard
         iconSource={ICON_BELL}
         label={`${childName}のスマホ制限時間`}
         remainingMinutes={smartphoneRemainingMinutes}
+        onEditPress={onEditSmartBaseTimePress}
       />
 
       {/* アクションボタン (Image アイコン使用) */}

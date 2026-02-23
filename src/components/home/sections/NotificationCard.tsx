@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, Image, ImageSourcePropType, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  ImageSourcePropType,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import HardShadowBox from '../../common/HardShadowBox';
 import { useTheme } from '../../../context/AppContext';
 
@@ -8,6 +16,12 @@ interface NotificationCardProps {
   iconSource: ImageSourcePropType;
   label: string;
   remainingMinutes: number;
+  /**
+   * ペンアイコンを押した際のコールバック。
+   * 指定された場合、カード右端にペンアイコンボタンを表示する。
+   * → ベース設定時間変更モーダルの呼び出しに使用。
+   */
+  onEditPress?: () => void;
 }
 
 /** ゲーム/スマホ残り時間を表示する通知カード */
@@ -15,6 +29,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   iconSource,
   label,
   remainingMinutes,
+  onEditPress,
 }) => {
   const theme = useTheme();
 
@@ -37,6 +52,17 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
           <View style={styles.topRow}>
             <Text style={[styles.label, { color: theme.text }]} numberOfLines={1}>{label}</Text>
             <Text style={[styles.dateLabel, { color: theme.text }]}>本日</Text>
+            {/* ベース時間設定ボタン（ペンアイコン） */}
+            {onEditPress && (
+              <TouchableOpacity
+                onPress={onEditPress}
+                style={styles.editButton}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="pencil-outline" size={16} color={theme.text} />
+              </TouchableOpacity>
+            )}
           </View>
           <Text style={[styles.timeText, { color: theme.text }]}>残り{remainingMinutes}分</Text>
         </View>
@@ -92,6 +118,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.36,
     marginLeft: 4,
+  },
+  editButton: {
+    marginLeft: 6,
+    padding: 2,
   },
   timeText: {
     fontSize: 28,
