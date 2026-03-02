@@ -11,9 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext, useTheme } from '../../context/AppContext';
 
-// ダークモードでは目が白いバージョンを使用
-// (Metro バンドラーが両方取り込めるよう require を分ける)
-
+const ICON_SMILEY_X = require('../../../asset/home/images/SmileyXEyes.png');
 
 /**
  * ネットワークエラー時のフルスクリーンロックオーバーレイ。
@@ -28,12 +26,9 @@ import { useAppContext, useTheme } from '../../context/AppContext';
  * - SmileyXEyes アイコン / エラータイトル / メッセージ / 更新ボタン
  */
 const NetworkErrorOverlay: React.FC = () => {
-  const { isNetworkError, setIsNetworkError, isDarkMode } = useAppContext();
+  const { isNetworkError, setIsNetworkError } = useAppContext();
   const theme = useTheme();
   const [isRetrying, setIsRetrying] = useState(false);
-  const ICON_SMILEY_X = isDarkMode
-    ? require('../../../asset/home/images/Smiley-X-white.png')
-    : require('../../../asset/home/images/SmileyXEyes.png');
 
   const handleRetry = async () => {
     setIsRetrying(true);

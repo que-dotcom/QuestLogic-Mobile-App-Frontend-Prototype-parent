@@ -2,16 +2,14 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import NotificationCard from './NotificationCard';
 import ActionButton from './ActionButton';
-import { useAppContext } from '../../../context/AppContext';
 
 // ─── アイコン画像 ──────────────────────────────────────────────────────────────
-// Figma からエクスポートされた PNG を使用（asset/home/images/ に配置済み）。
-// ダークモード時には白版画像を使うため、コンポーネント内部で isDarkMode を
-// 参照して切り替えを行う。
-// （静的 require を両方書いておけば Metro がバンドルに含める。）
-
-// 定義はコンポーネント関数内へ移動する。
-
+// Figma からエクスポートされた PNG を使用（asset/home/images/ に配置済み）
+// ファイル名はすべて英字・大文字小文字に注意（case-sensitive 環境対応）
+const ICON_BELL       = require('../../../../asset/home/images/BellRinging.png');
+const ICON_LOCK       = require('../../../../asset/home/images/SmileyXEyes.png');
+const ICON_UNLOCK     = require('../../../../asset/home/images/Smiley.png');
+const ICON_SLIDERS    = require('../../../../asset/home/images/sliders.png');
 
 interface GameManagementContentProps {
   /** 子供の名前（全ラベルで動的に使用） */
@@ -43,21 +41,6 @@ const GameManagementContent: React.FC<GameManagementContentProps> = ({
   onEditGameBaseTimePress,
   onEditSmartBaseTimePress,
 }) => {
-  const { isDarkMode } = useAppContext();
-
-  const ICON_BELL = isDarkMode
-    ? require('../../../../asset/home/images/BellRinging-white.png')
-    : require('../../../../asset/home/images/BellRinging.png');
-  const ICON_LOCK = isDarkMode
-    ? require('../../../../asset/home/images/Smiley-X-white.png')
-    : require('../../../../asset/home/images/SmileyXEyes.png');
-  const ICON_UNLOCK = isDarkMode
-    ? require('../../../../asset/home/images/Smiley-white.png')
-    : require('../../../../asset/home/images/Smiley.png');
-  const ICON_SLIDERS = isDarkMode
-    ? require('../../../../asset/home/images/sliders-white.png')
-    : require('../../../../asset/home/images/sliders.png');
-
   return (
     <View style={styles.container}>
       {/* ゲーム残り時間通知カード（ペンアイコンでベース時間変更） */}
