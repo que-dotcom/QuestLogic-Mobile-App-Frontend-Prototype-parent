@@ -21,14 +21,10 @@ import ExtendTimeModal from '../components/home/modals/ExtendTimeModal';
 import BaseTimeModal from '../components/home/modals/BaseTimeModal';
 
 // ─── アイコン画像 ──────────────────────────────────────────────────────────────
-// Figma からエクスポートされた PNG（asset/home/images/ に配置済み）。
-// ダークモードでは白系の画像に切り替えるため、実際の使用はコンポーネント内で
-// isDarkMode 値を参照して行う。
-// （パス指定を動的に書くと Metro バンドラーが除外することがあるため、
-// require は条件分岐内に分けて記述する。)
-
-// 以下はコンポーネント内で定義されるため、ここでは定数を置かない。
-
+// Figma からエクスポートされた PNG（asset/home/images/ に配置済み）
+// ファイル名の大文字小文字は実際のファイル名に合わせること（case-sensitive 環境対応）
+const ICON_LOCK   = require('../../asset/home/images/SmileyXEyes.png');
+const ICON_UNLOCK = require('../../asset/home/images/Smiley.png');
 
 /**
  * 今日の終了タスク一覧。
@@ -77,15 +73,6 @@ const HomeScreen: React.FC = () => {
     setBaseSmartphoneTime,
   } = useAppContext();
   const theme = useTheme();
-  const { isDarkMode } = useAppContext();
-
-  // アイコン画像をモード別に選択
-  const ICON_LOCK = isDarkMode
-    ? require('../../asset/home/images/Smiley-X-white.png')
-    : require('../../asset/home/images/SmileyXEyes.png');
-  const ICON_UNLOCK = isDarkMode
-    ? require('../../asset/home/images/Smiley-white.png')
-    : require('../../asset/home/images/Smiley.png');
 
   // ── 静的データ (API 取得後に setState で更新) ──
   const [completedTasks] = useState<CompletedTask[]>(INITIAL_COMPLETED_TASKS);
