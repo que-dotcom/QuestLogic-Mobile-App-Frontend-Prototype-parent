@@ -121,6 +121,9 @@ const SettingScreen: React.FC = () => {
   // ── 通知トグル処理 ──
 
   const handleNotificationToggle = async (value: boolean) => {
+    // ダークモードスイッチと同様にレイアウトアニメーションをかける
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
     if (value) {
       const granted = await requestAndTest();
       if (!granted) {
@@ -408,27 +411,19 @@ const SettingScreen: React.FC = () => {
           <Text style={[styles.sectionLabel, { color: theme.text }]}>
             ダークモード適用
           </Text>
-          {/* 丸いドットトグル（Figma デザインに準拠） */}
-          <TouchableOpacity
-            onPress={() => setIsDarkMode(!isDarkMode)}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-          >
-            <View
-              style={[
-                styles.dotToggle,
-                { borderColor: theme.text },
-                isDarkMode && { backgroundColor: theme.text },
-              ]}
-            />
-          </TouchableOpacity>
+          <Switch
+            value={isDarkMode}
+            onValueChange={(v) => {
+              setIsDarkMode(v);
+            }}
+            trackColor={{ false: '#767577', true: '#B0B0B0' }}
+            thumbColor={isDarkMode ? '#FDFDFD' : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+          />
         </View>
 
-        {/* ══════════════════════════════════════════════════════════════
-            デバッグ: ネットワークエラー画面テスト
-            ※ 本番リリース前に削除すること
-        ══════════════════════════════════════════════════════════════ */}
-        <View style={[styles.debugRow, dynamicStyles.separator]}>
+        {/* エラー画面テストボタンは別行 */}
+        <View style={[styles.sectionRow, dynamicStyles.sectionRow]}>
           <TouchableOpacity
             onPress={() => setIsNetworkError(true)}
             style={styles.debugButton}
@@ -557,13 +552,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // ── ダークモードドットトグル ──
-  dotToggle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
-  },
 
   // ── デバッグ行 ──
   debugRow: {

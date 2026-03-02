@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Colors } from '../../../theme/colors';
+import { useAppContext } from '../../../context/AppContext';
 
 /**
  * 【アイコン画像について】
@@ -16,7 +17,10 @@ import { Colors } from '../../../theme/colors';
  * asset/home/images/sliders.png に配置してください。
  * 現在はプレースホルダー PNG を使用しています。
  */
-const ICON_SLIDERS = require('../../../../asset/home/images/sliders.png');
+// アイコンはモードに応じて切り替える
+// ダークモードでのみ white 版が使われる。require は両方書いて
+// Metro バンドラーに取り込ませる。
+
 
 const DURATION_OPTIONS = [15, 30, 60] as const;
 type DurationOption = (typeof DURATION_OPTIONS)[number];
@@ -40,6 +44,10 @@ const ExtendTimeModal: React.FC<ExtendTimeModalProps> = ({
   onCancel,
 }) => {
   const [selected, setSelected] = useState<DurationOption>(30);
+  const { isDarkMode } = useAppContext();
+  const ICON_SLIDERS = isDarkMode
+    ? require('../../../../asset/home/images/sliders-white.png')
+    : require('../../../../asset/home/images/sliders.png');
 
   return (
     <Modal
