@@ -1,2 +1,15 @@
-node_modules
-node_modules
+node_modules/
+.expo/
+dist/
+
+# 環境変数
+.env
+.env.local
+.env.*.local
+
+# ログ
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
