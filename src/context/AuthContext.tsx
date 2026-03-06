@@ -121,11 +121,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * back_to_front.md § 4.2 参照: GET /api/test/login/parent
    */
   const signInWithTestApi = async (): Promise<UserInfo> => {
-    // テストポータルは Basic 認証が必要（back_to_front.md § 1）
-    const basicCredential = btoa('admin:Quest2404');
-    const data = await apiFetch<LoginResponse>('/api/test/login/parent', {
-      headers: { Authorization: `Basic ${basicCredential}` },
-    });
+    // GET /api/test/login/:role は認証不要（back_to_front.md § 4.2）
+    // Basic認証は /dev/test.html ポータルUI向けであり、このAPIには不要
+    const data = await apiFetch<LoginResponse>('/api/test/login/parent');
     return processLoginResponse(data);
   };
 
