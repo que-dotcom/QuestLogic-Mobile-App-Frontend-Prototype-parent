@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../context/AppContext';
 import type { ChatHistoryData, ChatListItem } from '../types/chat';
-import { dummyChatHistory } from '../data/chatData';
+import mockChatData from '../data/mock_chat.json';
 import DateLabel from '../components/chat/DateLabel';
 import ChatBubble from '../components/chat/ChatBubble';
 
@@ -59,7 +59,7 @@ const ChatScreen: React.FC = () => {
   const theme = useTheme();
 
   // ── データ（バックエンド API で差し替え予定） ──
-  const chatHistory: ChatHistoryData = dummyChatHistory;
+  const chatHistory: ChatHistoryData = mockChatData;
 
   // ── FlatList 用フラットリスト ──
   const listData = useMemo(() => flattenChatHistory(chatHistory), [chatHistory]);

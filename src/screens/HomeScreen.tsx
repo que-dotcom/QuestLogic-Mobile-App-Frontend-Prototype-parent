@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppContext, useTheme } from '../context/AppContext';
 import type { CompletedTask, HomeworkImage } from '../types/home';
+import mockHomeData from '../data/mock_home.json';
 
 import AccordionSection from '../components/home/AccordionSection';
 import TasksContent from '../components/home/sections/TasksContent';
@@ -26,36 +27,6 @@ import BaseTimeModal from '../components/home/modals/BaseTimeModal';
 const ICON_LOCK   = require('../../asset/home/images/SmileyXEyes.png');
 const ICON_UNLOCK = require('../../asset/home/images/Smiley.png');
 
-/**
- * 今日の終了タスク一覧。
- * subject と description を持つオブジェクトの配列。
- * → API レスポンスで置き換えられるよう CompletedTask[] 型に統一。
- */
-const INITIAL_COMPLETED_TASKS: CompletedTask[] = [
-  { id: '1', subject: '国語', description: '夏目漱石「こころ」読解問題' },
-  { id: '2', subject: '公民', description: '国会・内閣・裁判所の仕組み問題' },
-  { id: '3', subject: '数学一', description: '因数分解の基礎5-2' },
-];
-
-/**
- * 宿題確認画像一覧。
- * imageUrl は { uri: string } 形式で Image コンポーネントが受け取る。
- * → API レスポンス（S3 URL など）に差し替え可能。
- */
-const INITIAL_HOMEWORK_IMAGES: HomeworkImage[] = [
-  {
-    id: '1',
-    caption: 'ビフォー',
-    subject: '6年：文字と式',
-    imageUrl: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '2',
-    caption: 'アフター',
-    subject: '6年：文字と式',
-    imageUrl: 'https://via.placeholder.com/150',
-  },
-];
 
 // ─── モーダル種別 ──────────────────────────────────────────────────────────────
 type ModalType = 'none' | 'forceLock' | 'unlock' | 'extendTime' | 'baseGame' | 'baseSmart';
@@ -75,25 +46,25 @@ const HomeScreen: React.FC = () => {
   const theme = useTheme();
 
   // ── 静的データ (API 取得後に setState で更新) ──
-  const [completedTasks] = useState<CompletedTask[]>(INITIAL_COMPLETED_TASKS);
-  const [homeworkImages] = useState<HomeworkImage[]>(INITIAL_HOMEWORK_IMAGES);
+  const [completedTasks] = useState<CompletedTask[]>(mockHomeData.completedTasks);
+  const [homeworkImages] = useState<HomeworkImage[]>(mockHomeData.homeworkImages);
 
   // ── ゲーム管理：子供が使うたびに減算できるよう State に分離 ──
   /**
    * ゲーム残り時間 (分)。
    * 子供側アプリからの WebSocket / Polling で setGameRemainingMinutes を呼ぶ想定。
    */
-  const [gameRemainingMinutes, setGameRemainingMinutes] = useState<number>(45);
+  const [gameRemainingMinutes, setGameRemainingMinutes] = useState<number>(mockHomeData.gameManagement.gameRemainingMinutes);
 
   /**
    * スマホ残り時間 (分)。
    * gameRemainingMinutes と独立して管理することで個別の減算が可能。
    */
   const [smartphoneRemainingMinutes, setSmartphoneRemainingMinutes] =
-    useState<number>(30);
+    useState<number>(mockHomeData.gameManagement.smartphoneRemainingMinutes);
 
   /** 強制ロック中かどうか。trueのとき「強制ロック」ボタンが無効化される。 */
-  const [isForceLocked, setIsForceLocked] = useState<boolean>(false);
+  const [isForceLocked, setIsForceLocked] = useState<boolean>(mockHomeData.gameManagement.isForceLocked);
 
   // ── モーダル制御 ──
   const [activeModal, setActiveModal] = useState<ModalType>('none');

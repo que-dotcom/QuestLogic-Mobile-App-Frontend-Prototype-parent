@@ -19,6 +19,7 @@ import { useAppContext } from '../context/AppContext';
 import { lightTheme, darkTheme } from '../theme/theme';
 import { useNotification } from '../hooks/useNotification';
 import type { AiSettings, ConnectedDevice } from '../types/setting';
+import mockSettingData from '../data/mock_setting.json';
 
 import DotSlider from '../components/setting/DotSlider';
 import NoteBox from '../components/setting/NoteBox';
@@ -26,23 +27,6 @@ import NgToggleRow from '../components/setting/NgToggleRow';
 import DeviceModal from '../components/setting/DeviceModal';
 import LogoutModal from '../components/setting/LogoutModal';
 
-// ─── ダミーデータ（バックエンド API で差し替え予定） ──────────────────────────
-
-const INITIAL_DEVICES: ConnectedDevice[] = [
-  { id: 'd1', name: 'スイッチ2' },
-  { id: 'd2', name: 'androidスマートフォン' },
-  { id: 'd3', name: 'playstation5' },
-];
-
-const INITIAL_AI_SETTINGS: AiSettings = {
-  strictness: { level: 1 },
-  focus: { level: 1 },
-  ng: {
-    missingProcess: false,
-    workTimeMismatch: false,
-    imageReuse: false,
-  },
-};
 
 // ─── 注釈文 ───────────────────────────────────────────────────────────────────
 
@@ -62,10 +46,10 @@ const SettingScreen: React.FC = () => {
   // ── ローカルステート ──
 
   // AI 設定（バックエンド API で差し替え）
-  const [aiSettings, setAiSettings] = useState<AiSettings>(INITIAL_AI_SETTINGS);
+  const [aiSettings, setAiSettings] = useState<AiSettings>(mockSettingData.aiSettings);
 
   // デバイス一覧
-  const [devices] = useState<ConnectedDevice[]>(INITIAL_DEVICES);
+  const [devices] = useState<ConnectedDevice[]>(mockSettingData.devices);
 
   // アコーディオン開閉
   const [openSection, setOpenSection] = useState<

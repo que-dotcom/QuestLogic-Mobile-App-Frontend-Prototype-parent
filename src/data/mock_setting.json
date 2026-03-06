@@ -1,0 +1,16 @@
+{
+  "devices": [
+    { "id": "d1", "name": "スイッチ2" },
+    { "id": "d2", "name": "androidスマートフォン" },
+    { "id": "d3", "name": "playstation5" }
+  ],
+  "aiSettings": {
+    "strictness": { "level": 1 },
+    "focus": { "level": 1 },
+    "ng": {
+      "missingProcess": false,
+      "workTimeMismatch": false,
+      "imageReuse": false
+    }
+  }
+}

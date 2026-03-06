@@ -1,0 +1,29 @@
+{
+  "parentName": "田中",
+  "childName": "△△",
+  "completedTasks": [
+    { "id": "1", "subject": "国語", "description": "夏目漱石「こころ」読解問題" },
+    { "id": "2", "subject": "公民", "description": "国会・内閣・裁判所の仕組み問題" },
+    { "id": "3", "subject": "数学一", "description": "因数分解の基礎5-2" }
+  ],
+  "gameManagement": {
+    "gameRemainingMinutes": 45,
+    "smartphoneRemainingMinutes": 30,
+    "isForceLocked": false,
+    "childName": "△△"
+  },
+  "homeworkImages": [
+    {
+      "id": "1",
+      "caption": "ビフォー",
+      "subject": "6年：文字と式",
+      "imageUrl": "https://via.placeholder.com/150"
+    },
+    {
+      "id": "2",
+      "caption": "アフター",
+      "subject": "6年：文字と式",
+      "imageUrl": "https://via.placeholder.com/150"
+    }
+  ]
+}
