@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { lightTheme, darkTheme } from '../theme/theme';
 import { useNotification } from '../hooks/useNotification';
 import type { AiSettings, ConnectedDevice } from '../types/setting';
@@ -40,6 +41,7 @@ const NOTE_FOCUS =
 
 const SettingScreen: React.FC = () => {
   const { userName, setUserName, isDarkMode, setIsDarkMode, setIsNetworkError } = useAppContext();
+  const { signOut } = useAuth();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const { requestAndTest, cancelAll } = useNotification();
 
@@ -122,10 +124,9 @@ const SettingScreen: React.FC = () => {
 
   // ── ログアウト ──
 
-  const handleLogout = () => {
-    // TODO: 認証ライブラリのログアウト処理へ
+  const handleLogout = async () => {
     setLogoutModalVisible(false);
-    Alert.alert('ログアウト', '（デモ）ログアウト処理を実行しました');
+    await signOut();
   };
 
   // ── スタイル（テーマ依存） ──

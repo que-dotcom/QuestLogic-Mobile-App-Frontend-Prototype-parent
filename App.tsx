@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, View } from 'react-native';
 
-import { AppProvider } from './src/context/AppContext';
+import { AppProvider, useAppContext } from './src/context/AppContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import HomeScreen from './src/screens/HomeScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SettingScreen from './src/screens/SettingScreen';
+import LoginScreen from './src/screens/LoginScreen';
 import CustomTabBar from './src/components/common/CustomTabBar';
 import NetworkErrorOverlay from './src/components/common/NetworkErrorOverlay';
 
@@ -35,44 +38,67 @@ const NAV_THEME = {
   },
 };
 
+/**
+ * 認証状態に応じてログイン画面またはメインアプリを表示するルートコンポーネント。
+ * AppProvider の内側に置くことで useTheme() が使用できる。
+ */
+function RootNavigator() {
+  const { isAuthenticated, isLoading, userInfo } = useAuth();
+  const { setUserName } = useAppContext();
+
+  // アプリ起動時に SecureStore から復元したユーザー名を AppContext に反映
+  useEffect(() => {
+    if (userInfo?.name) setUserName(userInfo.name);
+  }, [userInfo?.name]);
+
+  // SecureStore の読み込み中はスピナーを表示
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#FC2865" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
+
+  return (
+    <>
+      <NavigationContainer theme={NAV_THEME}>
+        <StatusBar style="auto" />
+        <Tab.Navigator
+          tabBar={(props) => <CustomTabBar {...props} />}
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: {
+              position: 'absolute',
+              backgroundColor: 'transparent',
+              borderTopWidth: 0,
+              elevation: 0,
+            },
+          }}
+          initialRouteName="Home"
+        >
+          <Tab.Screen name="Home" component={HomeScreen} />
+          <Tab.Screen name="Chat" component={ChatScreen} />
+          <Tab.Screen name="Setting" component={SettingScreen} />
+        </Tab.Navigator>
+      </NavigationContainer>
+      <NetworkErrorOverlay />
+    </>
+  );
+}
+
 export default function App() {
   return (
-    <AppProvider>
-      <SafeAreaProvider>
-        <NavigationContainer theme={NAV_THEME}>
-          <StatusBar style="auto" />
-          <Tab.Navigator
-            tabBar={(props) => <CustomTabBar {...props} />}
-            screenOptions={{
-              headerShown: false,
-              /**
-               * position: 'absolute' により、タブバーが画面コンテンツの
-               * 上に浮いてオーバーレイ表示される。
-               * 各画面の ScrollView には paddingBottom を設定し、
-               * 最下部コンテンツがタブバーで隠れないようにする。
-               */
-              tabBarStyle: {
-                position: 'absolute',
-                backgroundColor: 'transparent',
-                borderTopWidth: 0,
-                elevation: 0,
-              },
-            }}
-            initialRouteName="Home"
-          >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Chat" component={ChatScreen} />
-            <Tab.Screen name="Setting" component={SettingScreen} />
-          </Tab.Navigator>
-        </NavigationContainer>
-
-        {/*
-         * ネットワークエラーオーバーレイ。
-         * AppProvider の内側 / NavigationContainer の外側に配置することで
-         * ナビゲーション・タブバーを含む全要素の上に表示される。
-         */}
-        <NetworkErrorOverlay />
-      </SafeAreaProvider>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <SafeAreaProvider>
+          <RootNavigator />
+        </SafeAreaProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 }

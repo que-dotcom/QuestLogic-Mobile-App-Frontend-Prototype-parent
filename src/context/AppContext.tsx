@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { lightTheme, darkTheme, AppTheme } from '../theme/theme';
+import { registerNetworkErrorHandler } from '../lib/apiClient';
 
 // ─── グローバル状態の型定義 ──────────────────────────────────────────────────
 
@@ -66,6 +67,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [baseGameTime, setBaseGameTime] = useState<number>(60);
   const [baseSmartphoneTime, setBaseSmartphoneTime] = useState<number>(60);
   const [isNetworkError, setIsNetworkError] = useState<boolean>(false);
+
+  useEffect(() => {
+    registerNetworkErrorHandler(() => setIsNetworkError(true));
+  }, []);
 
   return (
     <AppContext.Provider
