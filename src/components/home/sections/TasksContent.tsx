@@ -34,7 +34,7 @@ const TasksContent: React.FC<TasksContentProps> = ({ tasks }) => {
           ]}
         >
           <Text style={[styles.taskText, { color: theme.text }]}>
-            {task.subject}：{task.description}
+            {task.child.name}：{task.earnedPoints}pt 獲得
           </Text>
         </View>
       ))}

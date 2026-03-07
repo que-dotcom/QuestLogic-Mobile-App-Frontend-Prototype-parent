@@ -103,7 +103,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
 ## TASK-03 🟢 クエスト一覧取得の実装と型の修正
 
-**ステータス:** [ ] 未着手
+**ステータス:** [x] 完了
 **前提:** TASK-01, TASK-02
 
 ### やること
@@ -168,7 +168,7 @@ Authorization: Bearer <token>
 
 ## TASK-04 🟢 ユーザー名（プロフィール）更新のAPI接続
 
-**ステータス:** [ ] 未着手
+**ステータス:** [x] 完了
 **前提:** TASK-01, TASK-02
 
 ### やること
@@ -514,3 +514,5 @@ Authorization: Bearer <token>
 | 2026-03-06 | — | タスク一覧作成 |
 | 2026-03-06 | TASK-02 | 実装済み確認（src/lib/apiClient.ts）|
 | 2026-03-06 | TASK-01 | LoginScreen.tsx, AuthContext.tsx, App.tsx 実装・Google認証＋テストAPIログイン対応 |
+| 2026-03-06 | TASK-03 | CompletedTask型修正・TasksContent表示修正・HomeScreen useEffectでGET /api/quests呼び出し |
+| 2026-03-07 | TASK-04 | SettingScreen handleNameBlur でPUT /api/users/profile呼び出し・成功時setUserName・失敗時Alert＋ロールバック実装済み確認 |

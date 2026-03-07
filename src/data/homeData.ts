@@ -8,9 +8,9 @@ export const dummyHomeData: HomeScreenData = {
   parentName: '田中',
   childName: '△△',
   completedTasks: [
-    { id: '1', subject: '国語', description: '夏目漱石「こころ」読解問題' },
-    { id: '2', subject: '公民', description: '国会・内閣・裁判所の仕組み問題' },
-    { id: '3', subject: '数学一', description: '因数分解の基礎5-2' },
+    { id: '1', status: 'COMPLETED', earnedPoints: 32, child: { name: 'テスト生徒', avatarUrl: null } },
+    { id: '2', status: 'COMPLETED', earnedPoints: 20, child: { name: 'テスト生徒', avatarUrl: null } },
+    { id: '3', status: 'COMPLETED', earnedPoints: 15, child: { name: 'テスト生徒', avatarUrl: null } },
   ],
   gameManagement: {
     gameRemainingMinutes: 45,

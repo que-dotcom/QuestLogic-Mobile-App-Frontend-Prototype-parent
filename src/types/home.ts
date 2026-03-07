@@ -1,8 +1,9 @@
 /** 今日の終了タスク 1件分 */
 export interface CompletedTask {
   id: string;
-  subject: string;
-  description: string;
+  status: string;
+  earnedPoints: number;
+  child: { name: string; avatarUrl: string | null };
 }
 
 /** スマホ・ゲーム管理データ */

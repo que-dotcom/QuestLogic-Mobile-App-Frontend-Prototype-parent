@@ -118,12 +118,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /**
    * 開発用テストAPIでログインする。
-   * back_to_front.md § 4.2 参照: GET /api/test/login/parent
+   * back_to_front.md § 2.2 参照: GET /api/test/login/parent
+   * Basic認証ヘッダー必須: Base64("admin:Quest2404")
+   * apiFetch はJWTで Authorization を上書きするため、素の fetch を使用する。
    */
   const signInWithTestApi = async (): Promise<UserInfo> => {
-    // GET /api/test/login/:role は認証不要（back_to_front.md § 4.2）
-    // Basic認証は /dev/test.html ポータルUI向けであり、このAPIには不要
-    const data = await apiFetch<LoginResponse>('/api/test/login/parent');
+    const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
+    const credentials = btoa('admin:Quest2404');
+    const response = await fetch(`${BASE_URL}/api/test/login/parent`, {
+      headers: {
+        Authorization: `Basic ${credentials}`,
+      },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json() as LoginResponse;
     return processLoginResponse(data);
   };
 

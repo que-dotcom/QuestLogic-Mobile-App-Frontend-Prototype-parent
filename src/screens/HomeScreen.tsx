@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppContext, useTheme } from '../context/AppContext';
 import type { CompletedTask, HomeworkImage } from '../types/home';
 import mockHomeData from '../data/mock_home.json';
+import { apiFetch } from '../lib/apiClient';
 
 import AccordionSection from '../components/home/AccordionSection';
 import TasksContent from '../components/home/sections/TasksContent';
@@ -45,9 +46,21 @@ const HomeScreen: React.FC = () => {
   } = useAppContext();
   const theme = useTheme();
 
-  // ── 静的データ (API 取得後に setState で更新) ──
-  const [completedTasks] = useState<CompletedTask[]>(mockHomeData.completedTasks);
+  // ── 終了タスク: APIから取得 ──
+  const [completedTasks, setCompletedTasks] = useState<CompletedTask[]>([]);
   const [homeworkImages] = useState<HomeworkImage[]>(mockHomeData.homeworkImages);
+
+  useEffect(() => {
+    apiFetch<{ success: boolean; data: CompletedTask[] }>('/api/quests')
+      .then((res) => {
+        if (res.success) {
+          setCompletedTasks(res.data);
+        }
+      })
+      .catch(() => {
+        // エラー時は空のまま表示（NetworkErrorOverlayが表示される）
+      });
+  }, []);
 
   // ── ゲーム管理：子供が使うたびに減算できるよう State に分離 ──
   /**

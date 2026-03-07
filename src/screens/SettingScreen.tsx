@@ -21,6 +21,7 @@ import { lightTheme, darkTheme } from '../theme/theme';
 import { useNotification } from '../hooks/useNotification';
 import type { AiSettings, ConnectedDevice } from '../types/setting';
 import mockSettingData from '../data/mock_setting.json';
+import { apiFetch } from '../lib/apiClient';
 
 import DotSlider from '../components/setting/DotSlider';
 import NoteBox from '../components/setting/NoteBox';
@@ -46,6 +47,10 @@ const SettingScreen: React.FC = () => {
   const { requestAndTest, cancelAll } = useNotification();
 
   // ── ローカルステート ──
+
+  // プロフィール名（API保存前の編集中の値）
+  const [localName, setLocalName] = useState<string>(userName);
+  const [isSavingName, setIsSavingName] = useState(false);
 
   // AI 設定（バックエンド API で差し替え）
   const [aiSettings, setAiSettings] = useState<AiSettings>(mockSettingData.aiSettings);
@@ -86,6 +91,40 @@ const SettingScreen: React.FC = () => {
     },
     [openSection],
   );
+
+  // ── プロフィール名の保存 ──
+
+  const handleNameBlur = async () => {
+    const trimmed = localName.trim();
+    if (trimmed === userName) return; // 変更なし
+
+    if (trimmed.length === 0) {
+      setLocalName(userName);
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      const res = await apiFetch<{ success: boolean; message: string }>(
+        '/api/users/profile',
+        {
+          method: 'PUT',
+          body: JSON.stringify({ name: trimmed }),
+        },
+      );
+      if (res.success) {
+        setUserName(trimmed);
+      } else {
+        throw new Error('プロフィールの更新に失敗しました。');
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'エラーが発生しました。';
+      Alert.alert('保存失敗', message);
+      setLocalName(userName);
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   // ── バックエンド送信ダミー関数 ──
 
@@ -166,8 +205,10 @@ const SettingScreen: React.FC = () => {
 
           {/* 名前入力欄 */}
           <TextInput
-            value={userName}
-            onChangeText={setUserName}
+            value={localName}
+            onChangeText={setLocalName}
+            onBlur={handleNameBlur}
+            editable={!isSavingName}
             style={[styles.nameInput, dynamicStyles.inputText]}
             placeholderTextColor={theme.textSecondary}
             autoCorrect={false}
