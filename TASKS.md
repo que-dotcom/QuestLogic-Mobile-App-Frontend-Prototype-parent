@@ -204,7 +204,7 @@ Content-Type: application/json
 
 ## TASK-05 🟢 ボーナスポイント付与UIの追加
 
-**ステータス:** [ ] 未着手
+**ステータス:** [x] 完了
 **前提:** TASK-01, TASK-02, TASK-03
 
 ### やること
@@ -516,3 +516,4 @@ Authorization: Bearer <token>
 | 2026-03-06 | TASK-01 | LoginScreen.tsx, AuthContext.tsx, App.tsx 実装・Google認証＋テストAPIログイン対応 |
 | 2026-03-06 | TASK-03 | CompletedTask型修正・TasksContent表示修正・HomeScreen useEffectでGET /api/quests呼び出し |
 | 2026-03-07 | TASK-04 | SettingScreen handleNameBlur でPUT /api/users/profile呼び出し・成功時setUserName・失敗時Alert＋ロールバック実装済み確認 |
+| 2026-03-07 | TASK-05 | TasksContent.tsx にボーナス付与ボタン・入力モーダル・POST /api/quests/:id/bonus呼び出し・earnedPoints更新実装済み確認 |

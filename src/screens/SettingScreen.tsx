@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   LayoutAnimation,
   Alert,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -72,6 +73,25 @@ const SettingScreen: React.FC = () => {
   // モーダル表示
   const [deviceModalVisible, setDeviceModalVisible] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
+  // 招待コード
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ success: boolean; inviteCode: string }>('/api/users/invite-code')
+      .then((res) => {
+        if (res.success) setInviteCode(res.inviteCode);
+      })
+      .catch(() => {
+        // エラー時は非表示のまま
+      });
+  }, []);
+
+  const handleCopyInviteCode = async () => {
+    if (!inviteCode) return;
+    await Clipboard.setStringAsync(inviteCode);
+    Alert.alert('コピーしました', `招待コード「${inviteCode}」をコピーしました。`);
+  };
 
   // 通知トグル
   const [notificationEnabled, setNotificationEnabled] = useState(false);
@@ -412,6 +432,32 @@ const SettingScreen: React.FC = () => {
         )}
 
         {/* ══════════════════════════════════════════════════════════════
+            招待コード
+        ══════════════════════════════════════════════════════════════ */}
+        {inviteCode !== null && (
+          <View style={[styles.sectionRow, dynamicStyles.sectionRow]}>
+            <View style={styles.inviteCodeContent}>
+              <Text style={[styles.sectionLabel, { color: theme.text }]}>
+                招待コード
+              </Text>
+              <Text style={[styles.inviteCodeText, { color: theme.text }]}>
+                {inviteCode}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleCopyInviteCode}
+              style={[styles.copyButton, { borderColor: theme.accent }]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="copy-outline" size={16} color={theme.accent} />
+              <Text style={[styles.copyLabel, { color: theme.accent }]}>
+                コピー
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
             通知の許可
         ══════════════════════════════════════════════════════════════ */}
         <View style={[styles.sectionRow, dynamicStyles.sectionRow]}>
@@ -612,6 +658,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#FC2865',
     letterSpacing: 0.26,
+  },
+
+  // ── 招待コード ──
+  inviteCodeContent: {
+    flex: 1,
+  },
+  inviteCodeText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 4,
+    letterSpacing: 1,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginLeft: 12,
+  },
+  copyLabel: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 
   // ── ログアウト行 ──
