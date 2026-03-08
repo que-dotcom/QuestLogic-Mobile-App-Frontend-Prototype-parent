@@ -20,9 +20,16 @@ import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { lightTheme, darkTheme } from '../theme/theme';
 import { useNotification } from '../hooks/useNotification';
-import type { AiSettings, ConnectedDevice } from '../types/setting';
+import type { AiSettings, AiNgSetting, ConnectedDevice } from '../types/setting';
 import mockSettingData from '../data/mock_setting.json';
 import { apiFetch } from '../lib/apiClient';
+
+// APIレスポンスのAI設定形式（数値直接）← フロント型の { level: number } と異なる
+type ApiAiSettings = {
+  strictness: number;
+  focus: number;
+  ng: AiNgSetting;
+};
 
 import DotSlider from '../components/setting/DotSlider';
 import NoteBox from '../components/setting/NoteBox';
@@ -57,7 +64,7 @@ const SettingScreen: React.FC = () => {
   const [aiSettings, setAiSettings] = useState<AiSettings>(mockSettingData.aiSettings);
 
   // デバイス一覧
-  const [devices] = useState<ConnectedDevice[]>(mockSettingData.devices);
+  const [devices, setDevices] = useState<ConnectedDevice[]>([]);
 
   // アコーディオン開閉
   const [openSection, setOpenSection] = useState<
@@ -84,6 +91,34 @@ const SettingScreen: React.FC = () => {
       })
       .catch(() => {
         // エラー時は非表示のまま
+      });
+  }, []);
+
+  // TASK-11: AI設定をAPIから取得
+  useEffect(() => {
+    apiFetch<{ success: boolean; data: ApiAiSettings }>('/api/family/settings/ai')
+      .then((res) => {
+        if (res.success) {
+          setAiSettings({
+            strictness: { level: res.data.strictness },
+            focus: { level: res.data.focus },
+            ng: res.data.ng,
+          });
+        }
+      })
+      .catch(() => {
+        // エラー時はモック値のまま
+      });
+  }, []);
+
+  // TASK-12: デバイス一覧をAPIから取得
+  useEffect(() => {
+    apiFetch<{ success: boolean; data: ConnectedDevice[] }>('/api/family/devices')
+      .then((res) => {
+        if (res.success) setDevices(res.data);
+      })
+      .catch(() => {
+        // エラー時は空のまま
       });
   }, []);
 
@@ -148,19 +183,44 @@ const SettingScreen: React.FC = () => {
 
   // ── バックエンド送信ダミー関数 ──
 
+  // TASK-11: AI設定の保存
   const handleSaveStrictness = async () => {
-    // TODO: API PATCH /settings/ai { strictness: aiSettings.strictness }
-    Alert.alert('保存しました', `厳しさレベル: ${aiSettings.strictness.level}`);
+    try {
+      await apiFetch<{ success: boolean }>('/api/family/settings/ai', {
+        method: 'PATCH',
+        body: JSON.stringify({ strictness: aiSettings.strictness.level }),
+      });
+      Alert.alert('保存しました', `厳しさレベル: ${aiSettings.strictness.level}`);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'エラーが発生しました。';
+      Alert.alert('保存失敗', message);
+    }
   };
 
   const handleSaveFocus = async () => {
-    // TODO: API PATCH /settings/ai { focus: aiSettings.focus }
-    Alert.alert('保存しました', `重視点レベル: ${aiSettings.focus.level}`);
+    try {
+      await apiFetch<{ success: boolean }>('/api/family/settings/ai', {
+        method: 'PATCH',
+        body: JSON.stringify({ focus: aiSettings.focus.level }),
+      });
+      Alert.alert('保存しました', `重視点レベル: ${aiSettings.focus.level}`);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'エラーが発生しました。';
+      Alert.alert('保存失敗', message);
+    }
   };
 
   const handleSaveNg = async () => {
-    // TODO: API PATCH /settings/ai { ng: aiSettings.ng }
-    Alert.alert('保存しました', 'NG行為設定を更新しました');
+    try {
+      await apiFetch<{ success: boolean }>('/api/family/settings/ai', {
+        method: 'PATCH',
+        body: JSON.stringify({ ng: aiSettings.ng }),
+      });
+      Alert.alert('保存しました', 'NG行為設定を更新しました');
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'エラーが発生しました。';
+      Alert.alert('保存失敗', message);
+    }
   };
 
   // ── 通知トグル処理 ──

@@ -14,16 +14,20 @@
 
 ## 優先順位まとめ
 
-| 優先 | Task | 担当 | 前提タスク |
+| 優先 | Task | 担当 | ステータス |
 |------|------|------|---------|
-| 1 | TASK-02 APIクライアント作成 | フロント | なし |
-| 2 | TASK-01 認証フロー実装 | フロント | TASK-02 |
-| 3 | TASK-03 クエスト一覧取得 | フロント | TASK-01, 02 |
-| 4 | TASK-04 プロフィール更新 | フロント | TASK-01, 02 |
-| 5 | TASK-05 ボーナス付与UI | フロント | TASK-01, 02, 03 |
-| 6 | TASK-06 招待コード表示 | フロント | TASK-01, 02 |
-| 7 | TASK-07 ゲーム時間方針決定 | チーム判断 | — |
-| 8 | TASK-08〜12 | バックエンド依頼 | — |
+| — | TASK-02 APIクライアント作成 | フロント | ✅ 完了 |
+| — | TASK-01 認証フロー実装 | フロント | ✅ 完了 |
+| — | TASK-03 クエスト一覧取得 | フロント | ✅ 完了 |
+| — | TASK-04 プロフィール更新 | フロント | ✅ 完了 |
+| — | TASK-05 ボーナス付与UI | フロント | ✅ 完了 |
+| — | TASK-06 招待コード表示 | フロント | ✅ 完了 |
+| — | TASK-07 ゲーム時間取得 | フロント | ✅ 完了 |
+| — | TASK-09 宿題画像取得 | フロント | ✅ 完了 |
+| — | TASK-11 AI設定 | フロント | ✅ 完了 |
+| — | TASK-12 デバイス管理 | フロント | ✅ 完了 |
+| **1** | **TASK-08 lock/extend-time接続** | **フロント** | **✅ 完了** |
+| **2** | **TASK-10 チャット画面API接続** | **フロント** | **✅ 完了** |
 
 ---
 
@@ -244,7 +248,7 @@ Content-Type: application/json
 
 ## TASK-06 🟢 招待コード表示機能の追加
 
-**ステータス:** [ ] 未着手
+**ステータス:** [x] 完了
 **前提:** TASK-01, TASK-02
 
 ### やること
@@ -278,88 +282,45 @@ Authorization: Bearer <token>
 
 ## TASK-07 🟡 ゲーム残り時間表示の方針決定・実装
 
-**ステータス:** [ ] チーム判断待ち
+**ステータス:** [x] 完了（案A で実装済み）
 
 ### 状況
 
-現在アプリは「ゲーム残り時間（分）」をローカルstateで管理しているが、APIは「子供がポイントを消費してゲーム時間を購入するモデル」であり、**親が見る「現在の残り時間」を返すエンドポイントが存在しない**。
+`GET /api/family/game-status` をバックエンドが追加。`HomeScreen.tsx` の `useEffect` で呼び出し、`gameRemainingMinutes` / `smartphoneRemainingMinutes` / `isForceLocked` を取得・表示している。
 
-### 選択肢（チームで決定すること）
+### ⚠️ 残課題（TASK-08と連動）
 
-**案A: バックエンドに新しいAPIを追加してもらう（推奨）**
-- バックエンド担当者に `GET /api/users/:childId/game-status` の追加を依頼する
-- フロントはそのAPIを呼ぶだけ
-- TASK-08に依頼内容を記載
-
-**案B: `currentPoints` を残り時間として扱う**
-- `GET /api/test/login/parent` の `user.currentPoints` を残り時間（分）として表示する
-- バックエンド追加不要だが、「ポイント数＝分数」という前提が必要
-
-### 決定後のフロント作業
-
-- 案Aの場合: APIを呼んで `gameRemainingMinutes` を更新する
-- 案Bの場合: `AppContext` に `currentPoints` を追加し、`mock_home.json` の `gameRemainingMinutes` を削除する
+- 強制ロック（`POST /api/family/lock`）・時間延長（`POST /api/family/extend-time`）はフロントがまだモック状態（ローカルstateのみ更新）
 
 ---
 
 ## TASK-08 🔴 ゲーム管理系API追加をバックエンドに依頼
 
-**ステータス:** [ ] バックエンド依頼待ち
+**ステータス:** [x] 完了
 
-### バックエンドへの依頼内容
+### 完了したAPI（バックエンド実装済み・フロント接続済み）
 
-以下のエンドポイントの追加を依頼する。
+- ✅ `GET /api/family/game-status` — HomeScreen で接続済み
 
-#### 子供のゲーム状態取得
+### 未接続のAPI（バックエンド実装済み・フロント対応残り）
 
-```
-GET /api/family/:familyId/game-status
-Authorization: Bearer <token>
+- ⚠️ `POST /api/family/lock` — フロントがローカルstateのみ（APIを呼んでいない）
+- ⚠️ `POST /api/family/extend-time` — 同上
 
-期待するレスポンス:
-{
-  "success": true,
-  "gameRemainingMinutes": 45,
-  "smartphoneRemainingMinutes": 30,
-  "isForceLocked": false
-}
-```
+### フロント残作業
 
-#### 強制ロック・解除
+`HomeScreen.tsx` の以下3関数でAPIを呼ぶよう修正する：
+- `handleForceLockConfirm` → `POST /api/family/lock { "locked": true }`
+- `handleUnlockConfirm` → `POST /api/family/lock { "locked": false }`
+- `handleExtendTimeConfirm` → `POST /api/family/extend-time { "minutes": <入力値> }`
 
-```
-POST /api/family/:familyId/lock
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{ "locked": true }
-
-期待するレスポンス:
-{ "success": true, "locked": true }
-```
-
-#### 時間延長
-
-```
-POST /api/family/:familyId/extend-time
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{ "minutes": 30 }
-
-期待するレスポンス:
-{ "success": true, "newRemainingMinutes": 75 }
-```
-
-### フロントはAPI確定後に対応
-
-- `HomeScreen.tsx` の `handleForceLockConfirm` / `handleUnlockConfirm` / `handleExtendTimeConfirm` 内でAPIを呼ぶよう修正する
+成功後にレスポンス値でstateを更新し、失敗時はAlertを表示する。
 
 ---
 
 ## TASK-09 🔴 宿題画像取得APIをバックエンドに依頼
 
-**ステータス:** [ ] バックエンド依頼待ち
+**ステータス:** [x] 完了（バックエンド実装済み・フロント接続済み）
 
 ### 状況
 
@@ -399,7 +360,7 @@ Content-Type: application/json
 
 ## TASK-10 🔴 チャット画面（AI分析レポート）取得APIをバックエンドに依頼
 
-**ステータス:** [ ] バックエンド依頼待ち
+**ステータス:** [x] 完了（バックエンド実装済み・フロント接続済み）
 
 ### 状況
 
@@ -424,16 +385,17 @@ Content-Type: application/json
 }
 ```
 
-### フロントはAPI確定後に対応
+### フロント残作業（⚠️ 未実装）
 
-- `ChatScreen.tsx` で `GET /api/quests` を呼び、`aiResult.feedback_to_parent` を `createdAt` で日付グルーピングして表示する
-- `mock_chat.json` / `chatData.ts` を削除する
+- `ChatScreen.tsx` が現在 `mock_chat.json` を使用中（API未接続）
+- `GET /api/quests` を呼び、`aiResult.feedback_to_parent` を `createdAt` で日付グルーピングして表示する
+- 接続後に `mock_chat.json` / `chatData.ts` を削除する
 
 ---
 
 ## TASK-11 🔴 AI設定APIをバックエンドに依頼
 
-**ステータス:** [ ] バックエンド依頼待ち
+**ステータス:** [x] 完了（バックエンド実装済み・フロント接続済み）
 
 ### 状況
 
@@ -478,7 +440,7 @@ Content-Type: application/json
 
 ## TASK-12 🔴 デバイス管理APIをバックエンドに依頼
 
-**ステータス:** [ ] バックエンド依頼待ち
+**ステータス:** [x] 完了（バックエンド実装済み・フロント接続済み）
 
 ### 状況
 
@@ -517,3 +479,12 @@ Authorization: Bearer <token>
 | 2026-03-06 | TASK-03 | CompletedTask型修正・TasksContent表示修正・HomeScreen useEffectでGET /api/quests呼び出し |
 | 2026-03-07 | TASK-04 | SettingScreen handleNameBlur でPUT /api/users/profile呼び出し・成功時setUserName・失敗時Alert＋ロールバック実装済み確認 |
 | 2026-03-07 | TASK-05 | TasksContent.tsx にボーナス付与ボタン・入力モーダル・POST /api/quests/:id/bonus呼び出し・earnedPoints更新実装済み確認 |
+| 2026-03-08 | TASK-06 | SettingScreen.tsx に招待コードセクション追加・GET /api/users/invite-code・クリップボードコピー実装済み確認 |
+| 2026-03-08 | TASK-07 | GET /api/family/game-status 接続済み確認（案Aで完了）|
+| 2026-03-08 | TASK-09 | GET /api/quests に beforeImageUrl/afterImageUrl/subject フィールド追加済み確認 |
+| 2026-03-08 | TASK-11 | GET/PATCH /api/family/settings/ai 接続済み確認 |
+| 2026-03-08 | TASK-12 | GET /api/family/devices 接続済み確認 |
+| 2026-03-08 | TASK-08 | game-status は完了。lock/extend-time はフロントがモック状態のまま（要対応） |
+| 2026-03-08 | TASK-08 | handleForceLockConfirm/handleUnlockConfirm → POST /api/family/lock、handleExtendTimeConfirm → POST /api/family/extend-time 接続完了 |
+| 2026-03-08 | TASK-10 | バックエンド実装済み。ChatScreen.tsx が mock_chat.json を使用中（フロント未接続） |
+| 2026-03-08 | TASK-10 | GET /api/quests から aiResult.feedback_to_parent を取得・日付グルーピング実装。mock_chat.json / chatData.ts を削除。ローディング状態・空表示・エラーハンドリング対応 |

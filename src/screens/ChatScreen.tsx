@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   FlatList,
   ListRenderItem,
@@ -6,33 +6,100 @@ import {
   Platform,
   StatusBar,
   View,
+  ActivityIndicator,
+  Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../context/AppContext';
+import { apiFetch } from '../lib/apiClient';
 import type { ChatHistoryData, ChatListItem } from '../types/chat';
-import mockChatData from '../data/mock_chat.json';
 import DateLabel from '../components/chat/DateLabel';
 import ChatBubble from '../components/chat/ChatBubble';
 
-// ─── ChatDay[] → FlatList 用フラットリストへ変換 ─────────────────────────────
+// ─── API レスポンス型 ──────────────────────────────────────────────────────────
+
+/** GET /api/quests の1件分（チャット画面で使うフィールドのみ） */
+interface ApiQuest {
+  id: string;
+  createdAt: string;
+  aiResult: {
+    feedback_to_parent?: string;
+  } | null;
+}
+
+// ─── 日付ラベル変換 ───────────────────────────────────────────────────────────
 
 /**
- * ChatHistoryData（日付ごとのネスト構造）を FlatList が扱いやすい
- * ChatListItem[] のフラット配列に変換する。
- *
- * → API から取得した ChatHistoryData をそのままこの関数に渡せばよい。
+ * ISO 8601 文字列をチャット画面用の日付ラベルに変換する。
+ * - 当日  → "今日"
+ * - 前日  → "昨日"
+ * - それ以外 → "YYYY/MM/DD"
  */
+function toDateLabel(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+
+  const toMidnight = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const diffDays =
+    (toMidnight(now).getTime() - toMidnight(date).getTime()) /
+    (1000 * 60 * 60 * 24);
+
+  if (diffDays === 0) return '今日';
+  if (diffDays === 1) return '昨日';
+
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}/${m}/${d}`;
+}
+
+// ─── API データ → ChatHistoryData 変換 ───────────────────────────────────────
+
+/**
+ * GET /api/quests のレスポンスを ChatHistoryData に変換する。
+ * - feedback_to_parent が空のクエストは除外する
+ * - createdAt で昇順ソートしてから日付グルーピングする
+ */
+function buildChatHistory(quests: ApiQuest[]): ChatHistoryData {
+  // feedback_to_parent がないクエストを除外し、日時昇順でソート
+  const filtered = quests
+    .filter((q) => q.aiResult?.feedback_to_parent)
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+  // 日付ラベルでグループ化（Map で挿入順を保持）
+  const groups = new Map<string, ApiQuest[]>();
+  for (const quest of filtered) {
+    const label = toDateLabel(quest.createdAt);
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label)!.push(quest);
+  }
+
+  return Array.from(groups.entries()).map(([dateLabel, dayQuests]) => ({
+    dateLabel,
+    messages: dayQuests.map((q) => ({
+      id: q.id,
+      text: q.aiResult!.feedback_to_parent!,
+      isTyping: false,
+    })),
+  }));
+}
+
+// ─── ChatDay[] → FlatList 用フラットリストへ変換 ─────────────────────────────
+
 function flattenChatHistory(history: ChatHistoryData): ChatListItem[] {
   const items: ChatListItem[] = [];
   history.forEach((day) => {
-    // 日付ラベルを先頭に追加
     items.push({
       type: 'dateLabel',
       id: `date-${day.dateLabel}`,
       label: day.dateLabel,
     });
-    // その日のメッセージを追加
     day.messages.forEach((msg) => {
       items.push({
         type: 'message',
@@ -47,27 +114,33 @@ function flattenChatHistory(history: ChatHistoryData): ChatListItem[] {
 
 // ─── コンポーネント ────────────────────────────────────────────────────────────
 
-/**
- * Chat 画面 — AI アシスタントからのレポートを一覧表示する画面。
- *
- * 【バックエンド連携ポイント】
- * - `dummyChatHistory` を useEffect 内の API 呼び出し結果で置き換える。
- * - タイピング中状態は isTyping: true のメッセージを WebSocket / Polling で追加。
- * - 新しいメッセージ受信時は flatListRef.current?.scrollToEnd() を呼び出す。
- */
 const ChatScreen: React.FC = () => {
   const theme = useTheme();
 
-  // ── データ（バックエンド API で差し替え予定） ──
-  const chatHistory: ChatHistoryData = mockChatData;
+  const [chatHistory, setChatHistory] = useState<ChatHistoryData>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // ── FlatList 用フラットリスト ──
+  // GET /api/quests から aiResult.feedback_to_parent を取得して日付グルーピング
+  useEffect(() => {
+    apiFetch<{ success: boolean; data: ApiQuest[] }>('/api/quests')
+      .then((res) => {
+        if (res.success) {
+          setChatHistory(buildChatHistory(res.data));
+        }
+      })
+      .catch(() => {
+        // ネットワークエラー時は NetworkErrorOverlay が表示される
+        // その他のエラーは空のまま表示
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
   const listData = useMemo(() => flattenChatHistory(chatHistory), [chatHistory]);
 
-  // ── 最新メッセージへ自動スクロール ──
   const flatListRef = useRef<FlatList<ChatListItem>>(null);
 
-  // ── レンダラ ──
   const renderItem: ListRenderItem<ChatListItem> = ({ item }) => {
     if (item.type === 'dateLabel') {
       return <DateLabel label={item.label} />;
@@ -85,20 +158,31 @@ const ChatScreen: React.FC = () => {
         backgroundColor={theme.background}
       />
 
-      <FlatList
-        ref={flatListRef}
-        data={listData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        // 新メッセージ追加時に最下部へスクロール
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        // 大量メッセージでのパフォーマンス向上
-        removeClippedSubviews={Platform.OS === 'android'}
-        // テイルの絶対配置が隣のアイテムに重なるのを防ぐ
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+      {isLoading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={theme.text} />
+        </View>
+      ) : listData.length === 0 ? (
+        <View style={styles.centerContainer}>
+          <Text style={[styles.emptyText, { color: theme.text }]}>
+            AIレポートはまだありません
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={listData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
+          removeClippedSubviews={Platform.OS === 'android'}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -108,14 +192,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 15,
+    opacity: 0.5,
+  },
   listContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    // タブバーがオーバーレイ（position:absolute）のため十分な余白を確保
     paddingBottom: 120,
   },
   separator: {
-    height: 0, // ChatBubble 自身に marginBottom: 16 があるので追加不要
+    height: 0,
   },
 });
 

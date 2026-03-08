@@ -6,13 +6,22 @@ import {
   StyleSheet,
   Platform,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppContext, useTheme } from '../context/AppContext';
 import type { CompletedTask, HomeworkImage } from '../types/home';
-import mockHomeData from '../data/mock_home.json';
 import { apiFetch } from '../lib/apiClient';
+
+// GET /api/quests のレスポンス1件分の型（CompletedTaskより多くのフィールドを持つ）
+type ApiQuest = CompletedTask & {
+  beforeImageUrl: string;
+  afterImageUrl: string;
+  subject: string | null;
+  createdAt: string;
+  aiResult: { feedback_to_parent?: string } | null;
+};
 
 import AccordionSection from '../components/home/AccordionSection';
 import TasksContent from '../components/home/sections/TasksContent';
@@ -48,13 +57,30 @@ const HomeScreen: React.FC = () => {
 
   // ── 終了タスク: APIから取得 ──
   const [completedTasks, setCompletedTasks] = useState<CompletedTask[]>([]);
-  const [homeworkImages] = useState<HomeworkImage[]>(mockHomeData.homeworkImages);
+  const [homeworkImages, setHomeworkImages] = useState<HomeworkImage[]>([]);
 
+  // TASK-09: GET /api/quests でタスク一覧と宿題画像を同時に取得
   useEffect(() => {
-    apiFetch<{ success: boolean; data: CompletedTask[] }>('/api/quests')
+    apiFetch<{ success: boolean; data: ApiQuest[] }>('/api/quests')
       .then((res) => {
         if (res.success) {
           setCompletedTasks(res.data);
+          // before/after 画像を HomeworkImage 形式に変換
+          const images: HomeworkImage[] = res.data.flatMap((quest) => [
+            {
+              id: `${quest.id}-before`,
+              caption: 'ビフォー',
+              subject: quest.subject ?? '',
+              imageUrl: quest.beforeImageUrl,
+            },
+            {
+              id: `${quest.id}-after`,
+              caption: 'アフター',
+              subject: quest.subject ?? '',
+              imageUrl: quest.afterImageUrl,
+            },
+          ]);
+          setHomeworkImages(images);
         }
       })
       .catch(() => {
@@ -63,41 +89,90 @@ const HomeScreen: React.FC = () => {
   }, []);
 
   // ── ゲーム管理：子供が使うたびに減算できるよう State に分離 ──
-  /**
-   * ゲーム残り時間 (分)。
-   * 子供側アプリからの WebSocket / Polling で setGameRemainingMinutes を呼ぶ想定。
-   */
-  const [gameRemainingMinutes, setGameRemainingMinutes] = useState<number>(mockHomeData.gameManagement.gameRemainingMinutes);
+  /** ゲーム残り時間 (分)。GET /api/family/game-status から取得。 */
+  const [gameRemainingMinutes, setGameRemainingMinutes] = useState<number>(0);
 
-  /**
-   * スマホ残り時間 (分)。
-   * gameRemainingMinutes と独立して管理することで個別の減算が可能。
-   */
-  const [smartphoneRemainingMinutes, setSmartphoneRemainingMinutes] =
-    useState<number>(mockHomeData.gameManagement.smartphoneRemainingMinutes);
+  /** スマホ残り時間 (分)。GET /api/family/game-status から取得。 */
+  const [smartphoneRemainingMinutes, setSmartphoneRemainingMinutes] = useState<number>(0);
 
   /** 強制ロック中かどうか。trueのとき「強制ロック」ボタンが無効化される。 */
-  const [isForceLocked, setIsForceLocked] = useState<boolean>(mockHomeData.gameManagement.isForceLocked);
+  const [isForceLocked, setIsForceLocked] = useState<boolean>(false);
+
+  // TASK-07: ゲーム状態をAPIから取得
+  useEffect(() => {
+    apiFetch<{
+      success: boolean;
+      gameRemainingMinutes: number;
+      smartphoneRemainingMinutes: number;
+      isForceLocked: boolean;
+    }>('/api/family/game-status')
+      .then((res) => {
+        if (res.success) {
+          setGameRemainingMinutes(res.gameRemainingMinutes);
+          setSmartphoneRemainingMinutes(res.smartphoneRemainingMinutes);
+          setIsForceLocked(res.isForceLocked);
+        }
+      })
+      .catch(() => {
+        // エラー時は初期値のまま
+      });
+  }, []);
 
   // ── モーダル制御 ──
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const closeModal = () => setActiveModal('none');
 
   // ── ハンドラ ──
-  const handleForceLockConfirm = () => {
-    setIsForceLocked(true);
-    closeModal();
+
+  /** POST /api/family/lock で強制ロック or 解除を行う共通処理 */
+  const handleLockApi = async (locked: boolean) => {
+    try {
+      const res = await apiFetch<{ success: boolean; locked: boolean }>(
+        '/api/family/lock',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locked }),
+        },
+      );
+      if (res.success) {
+        setIsForceLocked(res.locked);
+        closeModal();
+      } else {
+        Alert.alert('エラー', 'ロック状態の変更に失敗しました。');
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'ロック操作に失敗しました。';
+      Alert.alert('エラー', message);
+    }
   };
 
-  const handleUnlockConfirm = () => {
-    setIsForceLocked(false);
-    closeModal();
-  };
+  const handleForceLockConfirm = () => handleLockApi(true);
 
-  const handleExtendTimeConfirm = (minutes: number) => {
-    setGameRemainingMinutes((prev) => prev + minutes);
-    setSmartphoneRemainingMinutes((prev) => prev + minutes);
-    closeModal();
+  const handleUnlockConfirm = () => handleLockApi(false);
+
+  const handleExtendTimeConfirm = async (minutes: number) => {
+    try {
+      const res = await apiFetch<{
+        success: boolean;
+        newGameRemainingMinutes: number;
+        newSmartphoneRemainingMinutes: number;
+      }>('/api/family/extend-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minutes }),
+      });
+      if (res.success) {
+        setGameRemainingMinutes(res.newGameRemainingMinutes);
+        setSmartphoneRemainingMinutes(res.newSmartphoneRemainingMinutes);
+        closeModal();
+      } else {
+        Alert.alert('エラー', '時間延長に失敗しました。');
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : '時間延長に失敗しました。';
+      Alert.alert('エラー', message);
+    }
   };
 
   // ── ベース時間設定ハンドラ ──

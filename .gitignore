@@ -16,3 +16,6 @@ npm-debug.log*
 
 # backendへの依頼文
 requests/
+
+# DB関連
+*.prisma
