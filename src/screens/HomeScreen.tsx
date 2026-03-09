@@ -21,6 +21,7 @@ type ApiQuest = CompletedTask & {
   subject: string | null;
   createdAt: string;
   aiResult: { feedback_to_parent?: string } | null;
+  child: { name: string; avatarUrl?: string } | null;
 };
 
 import AccordionSection from '../components/home/AccordionSection';
@@ -48,6 +49,7 @@ const HomeScreen: React.FC = () => {
   const {
     userName,
     childName,
+    setChildName,
     baseGameTime,
     setBaseGameTime,
     baseSmartphoneTime,
@@ -83,8 +85,9 @@ const HomeScreen: React.FC = () => {
           setHomeworkImages(images);
         }
       })
-      .catch(() => {
-        // エラー時は空のまま表示（NetworkErrorOverlayが表示される）
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : 'データの取得に失敗しました。';
+        Alert.alert('データ取得失敗', message);
       });
   }, []);
 
@@ -105,16 +108,22 @@ const HomeScreen: React.FC = () => {
       gameRemainingMinutes: number;
       smartphoneRemainingMinutes: number;
       isForceLocked: boolean;
+      childName?: string;
     }>('/api/family/game-status')
       .then((res) => {
         if (res.success) {
           setGameRemainingMinutes(res.gameRemainingMinutes);
           setSmartphoneRemainingMinutes(res.smartphoneRemainingMinutes);
           setIsForceLocked(res.isForceLocked);
+          // TASK-13: 案A - game-status レスポンスの childName をセット
+          if (res.childName) {
+            setChildName(res.childName);
+          }
         }
       })
-      .catch(() => {
-        // エラー時は初期値のまま
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : 'データの取得に失敗しました。';
+        Alert.alert('データ取得失敗', message);
       });
   }, []);
 

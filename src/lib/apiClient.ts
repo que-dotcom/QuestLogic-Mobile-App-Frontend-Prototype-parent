@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 // ─── 定数 ─────────────────────────────────────────────────────────────────────
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_API_TIMEOUT ?? 30_000);
 const TOKEN_KEY = 'auth_token';
 
 // ─── ネットワークエラーハンドラー登録 ─────────────────────────────────────────
