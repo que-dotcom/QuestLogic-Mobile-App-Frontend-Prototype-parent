@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { saveToken, getToken, deleteToken, apiFetch } from '../lib/apiClient';
+import { saveToken, getToken, deleteToken, apiFetch, registerUnauthorizedHandler } from '../lib/apiClient';
 
 // ─── 定数 ─────────────────────────────────────────────────────────────────────
 
@@ -69,6 +69,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // signOut の最新参照を保持する ref（useEffect 内で古い参照を掴まないように）
+  const signOutRef = useRef<() => Promise<void>>(async () => {});
+
+  // 401 ハンドラーを登録する（signOutRef 経由で常に最新の signOut を呼ぶ）
+  useEffect(() => {
+    registerUnauthorizedHandler(() => {
+      signOutRef.current();
+    });
+  }, []);
+
   // アプリ起動時に SecureStore から JWT とユーザー情報を復元
   useEffect(() => {
     (async () => {
@@ -119,12 +129,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /**
    * 開発用テストAPIでログインする。
    * back_to_front.md § 2.2 参照: GET /api/test/login/parent
-   * Basic認証ヘッダー必須: Base64("admin:Quest2404")
+   * Basic認証ヘッダー必須: Base64("{EXPO_PUBLIC_TEST_USER}:{EXPO_PUBLIC_TEST_PASS}")
    * apiFetch はJWTで Authorization を上書きするため、素の fetch を使用する。
    */
   const signInWithTestApi = async (): Promise<UserInfo> => {
     const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
-    const credentials = btoa('admin:Quest2404');
+    const user = process.env.EXPO_PUBLIC_TEST_USER ?? 'admin';
+    const pass = process.env.EXPO_PUBLIC_TEST_PASS ?? 'Quest2404';
+    const credentials = btoa(`${user}:${pass}`);
     const response = await fetch(`${BASE_URL}/api/test/login/parent`, {
       headers: {
         Authorization: `Basic ${credentials}`,
@@ -141,6 +153,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUserInfo(null);
   };
+
+  // ref を常に最新の signOut で更新する
+  signOutRef.current = signOut;
 
   return (
     <AuthContext.Provider

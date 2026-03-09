@@ -20,6 +20,20 @@ export function registerNetworkErrorHandler(handler: () => void): void {
   onNetworkError = handler;
 }
 
+// ─── 401 未認証ハンドラー登録 ─────────────────────────────────────────────────
+// トークン期限切れ・無効時にログアウト処理を呼び出すためのコールバック。
+// AuthProvider の useEffect 内で登録する。
+
+let onUnauthorized: (() => void) | null = null;
+
+/**
+ * HTTP 401 レスポンス時に呼び出すコールバックを登録する。
+ * AuthProvider の useEffect 内で呼ぶこと。
+ */
+export function registerUnauthorizedHandler(handler: () => void): void {
+  onUnauthorized = handler;
+}
+
 // ─── トークン管理ヘルパー ──────────────────────────────────────────────────────
 
 /** JWTトークンを SecureStore に保存する */
@@ -86,6 +100,9 @@ export async function apiFetch<T>(
         }
       } catch {
         // JSON パース失敗時はステータスコードをそのまま使う
+      }
+      if (response.status === 401) {
+        onUnauthorized?.();
       }
       throw new Error(errorMessage);
     }
