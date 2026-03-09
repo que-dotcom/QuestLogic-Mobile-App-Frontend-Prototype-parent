@@ -13,7 +13,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FDFDFD"
-      }
+      },
+      "package": "com.raitsumugu.parentapp"
     },
     "web": {},
     "plugins": [
