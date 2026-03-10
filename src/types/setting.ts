@@ -5,22 +5,6 @@
 
 // ─── AI分析設定 ───────────────────────────────────────────────────────────────
 
-/**
- * AI分析の評価の厳しさ設定。
- * level: 1〜5 の整数（1=最も優しい, 5=最も厳しい）
- */
-export interface AiStrictnessSetting {
-  level: number;
-}
-
-/**
- * AI分析の重視点設定。
- * level: 1=途中経過重視, 2=バランスよく, 3=字の丁寧さ重視
- */
-export interface AiFocusSetting {
-  level: number;
-}
-
 /** AI分析で検出するNG行為の設定 */
 export interface AiNgSetting {
   /** 途中式・プロセスの欠落を検出するか */
@@ -33,8 +17,10 @@ export interface AiNgSetting {
 
 /** AI分析設定全体（APIリクエスト/レスポンスの形に合わせる） */
 export interface AiSettings {
-  strictness: AiStrictnessSetting;
-  focus: AiFocusSetting;
+  /** 1〜5 の整数（1=最も優しい, 5=最も厳しい） */
+  strictness: number;
+  /** 1=途中経過重視, 2=バランスよく, 3=字の丁寧さ重視 */
+  focus: number;
   ng: AiNgSetting;
 }
 

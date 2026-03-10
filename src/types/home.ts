@@ -11,7 +11,7 @@ export interface GameManagementData {
   gameRemainingMinutes: number;
   smartphoneRemainingMinutes: number;
   isForceLocked: boolean;
-  childName: string;
+  childName?: string;
 }
 
 /** 宿題確認画像 1件分 */

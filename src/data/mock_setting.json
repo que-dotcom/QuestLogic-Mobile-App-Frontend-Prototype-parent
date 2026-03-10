@@ -5,8 +5,8 @@
     { "id": "d3", "name": "playstation5" }
   ],
   "aiSettings": {
-    "strictness": { "level": 1 },
-    "focus": { "level": 1 },
+    "strictness": 1,
+    "focus": 1,
     "ng": {
       "missingProcess": false,
       "workTimeMismatch": false,

@@ -17,6 +17,11 @@ interface LoginResponse {
     name: string;
     role: string;
     familyId: string;
+    email?: string;
+    avatarUrl?: string;
+    currentPoints?: number;
+    level?: number;
+    exp?: number;
   };
 }
 

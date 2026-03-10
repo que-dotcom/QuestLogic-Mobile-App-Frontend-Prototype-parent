@@ -101,7 +101,7 @@ export async function apiFetch<T>(
       } catch {
         // JSON パース失敗時はステータスコードをそのまま使う
       }
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         onUnauthorized?.();
       }
       throw new Error(errorMessage);

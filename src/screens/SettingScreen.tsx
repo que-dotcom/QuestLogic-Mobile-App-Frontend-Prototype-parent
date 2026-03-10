@@ -21,16 +21,9 @@ import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { lightTheme, darkTheme } from '../theme/theme';
 import { useNotification } from '../hooks/useNotification';
-import type { AiSettings, AiNgSetting, ConnectedDevice } from '../types/setting';
+import type { AiSettings, ConnectedDevice } from '../types/setting';
 import mockSettingData from '../data/mock_setting.json';
 import { apiFetch } from '../lib/apiClient';
-
-// APIレスポンスのAI設定形式（数値直接）← フロント型の { level: number } と異なる
-type ApiAiSettings = {
-  strictness: number;
-  focus: number;
-  ng: AiNgSetting;
-};
 
 import DotSlider from '../components/setting/DotSlider';
 import NoteBox from '../components/setting/NoteBox';
@@ -101,14 +94,10 @@ const SettingScreen: React.FC = () => {
 
   // TASK-11: AI設定をAPIから取得
   useEffect(() => {
-    apiFetch<{ success: boolean; data: ApiAiSettings }>('/api/family/settings/ai')
+    apiFetch<{ success: boolean; data: AiSettings }>('/api/family/settings/ai')
       .then((res) => {
         if (res.success) {
-          setAiSettings({
-            strictness: { level: res.data.strictness },
-            focus: { level: res.data.focus },
-            ng: res.data.ng,
-          });
+          setAiSettings(res.data);
         }
       })
       .catch(() => {
@@ -214,9 +203,9 @@ const SettingScreen: React.FC = () => {
     try {
       await apiFetch<{ success: boolean }>('/api/family/settings/ai', {
         method: 'PATCH',
-        body: JSON.stringify({ strictness: aiSettings.strictness.level }),
+        body: JSON.stringify({ strictness: aiSettings.strictness }),
       });
-      Alert.alert('保存しました', `厳しさレベル: ${aiSettings.strictness.level}`);
+      Alert.alert('保存しました', `厳しさレベル: ${aiSettings.strictness}`);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'エラーが発生しました。';
       Alert.alert('保存失敗', message);
@@ -227,9 +216,9 @@ const SettingScreen: React.FC = () => {
     try {
       await apiFetch<{ success: boolean }>('/api/family/settings/ai', {
         method: 'PATCH',
-        body: JSON.stringify({ focus: aiSettings.focus.level }),
+        body: JSON.stringify({ focus: aiSettings.focus }),
       });
-      Alert.alert('保存しました', `重視点レベル: ${aiSettings.focus.level}`);
+      Alert.alert('保存しました', `重視点レベル: ${aiSettings.focus}`);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'エラーが発生しました。';
       Alert.alert('保存失敗', message);
@@ -353,12 +342,12 @@ const SettingScreen: React.FC = () => {
         {openSection === 'strictness' && (
           <View style={[styles.sectionContent, { borderBottomColor: theme.separator }]}>
             <DotSlider
-              value={aiSettings.strictness.level}
+              value={aiSettings.strictness}
               max={5}
               onChange={(v) =>
                 setAiSettings((prev) => ({
                   ...prev,
-                  strictness: { level: v },
+                  strictness: v,
                 }))
               }
               theme={theme}
@@ -410,12 +399,12 @@ const SettingScreen: React.FC = () => {
         {openSection === 'focus' && (
           <View style={[styles.sectionContent, { borderBottomColor: theme.separator }]}>
             <DotSlider
-              value={aiSettings.focus.level}
+              value={aiSettings.focus}
               max={3}
               onChange={(v) =>
                 setAiSettings((prev) => ({
                   ...prev,
-                  focus: { level: v },
+                  focus: v,
                 }))
               }
               theme={theme}
