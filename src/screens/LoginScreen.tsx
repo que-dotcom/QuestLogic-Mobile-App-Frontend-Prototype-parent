@@ -27,8 +27,8 @@ const LoginScreen: React.FC = () => {
   const theme = useTheme();
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   });
 
   const [isSigningIn, setIsSigningIn] = React.useState(false);
@@ -54,9 +54,9 @@ const LoginScreen: React.FC = () => {
   }, [response, signIn, setUserName]);
 
   const handleGoogleLogin = async () => {
-    if (!process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB ||
-        process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB === 'YOUR_WEB_CLIENT_ID_HERE') {
-      Alert.alert('設定エラー', '.env に EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB を設定してください。');
+    if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID === 'YOUR_WEB_CLIENT_ID_HERE') {
+      Alert.alert('設定エラー', '.env に EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID を設定してください。');
       return;
     }
     await promptAsync();
