@@ -24,6 +24,7 @@ interface LoginResponse {
 export interface UserInfo {
   id: string;
   name: string;
+  role: string;
   familyId: string;
 }
 
@@ -56,8 +57,8 @@ const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
   token: null,
   userInfo: null,
-  signIn: async () => ({ id: '', name: '', familyId: '' }),
-  signInWithTestApi: async () => ({ id: '', name: '', familyId: '' }),
+  signIn: async () => ({ id: '', name: '', role: '', familyId: '' }),
+  signInWithTestApi: async () => ({ id: '', name: '', role: '', familyId: '' }),
   signOut: async () => {},
   isLoading: true,
 });
@@ -104,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const user: UserInfo = {
       id: data.user.id,
       name: data.user.name,
+      role: data.user.role,
       familyId: data.user.familyId,
     };
     await saveToken(data.token);

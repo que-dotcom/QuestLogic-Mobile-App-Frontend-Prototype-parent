@@ -11,6 +11,7 @@ import {
   StatusBar,
   LayoutAnimation,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,7 +51,7 @@ const NOTE_FOCUS =
 
 const SettingScreen: React.FC = () => {
   const { userName, setUserName, isDarkMode, setIsDarkMode, setIsNetworkError } = useAppContext();
-  const { signOut } = useAuth();
+  const { signOut, userInfo } = useAuth();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const { requestAndTest, cancelAll } = useNotification();
 
@@ -83,6 +84,10 @@ const SettingScreen: React.FC = () => {
 
   // 招待コード
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+
+  // 家族参加（子ロール用）
+  const [joinCode, setJoinCode] = useState('');
+  const [joinLoading, setJoinLoading] = useState(false);
 
   useEffect(() => {
     apiFetch<{ success: boolean; inviteCode: string }>('/api/users/invite-code')
@@ -121,6 +126,27 @@ const SettingScreen: React.FC = () => {
         // エラー時は空のまま
       });
   }, []);
+
+  const handleJoinFamily = async () => {
+    if (!joinCode.trim()) {
+      Alert.alert('エラー', '招待コードを入力してください。');
+      return;
+    }
+    setJoinLoading(true);
+    try {
+      await apiFetch<{ success: boolean }>('/api/users/join-family', {
+        method: 'POST',
+        body: JSON.stringify({ inviteCode: joinCode.trim() }),
+      });
+      Alert.alert('完了', '家族への参加が完了しました！');
+      setJoinCode('');
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'エラーが発生しました。';
+      Alert.alert('エラー', message);
+    } finally {
+      setJoinLoading(false);
+    }
+  };
 
   const handleCopyInviteCode = async () => {
     if (!inviteCode) return;
@@ -494,7 +520,7 @@ const SettingScreen: React.FC = () => {
         {/* ══════════════════════════════════════════════════════════════
             招待コード
         ══════════════════════════════════════════════════════════════ */}
-        {inviteCode !== null && (
+        {userInfo?.role === 'PARENT' && inviteCode !== null && (
           <View style={[styles.sectionRow, dynamicStyles.sectionRow]}>
             <View style={styles.inviteCodeContent}>
               <Text style={[styles.sectionLabel, { color: theme.text }]}>
