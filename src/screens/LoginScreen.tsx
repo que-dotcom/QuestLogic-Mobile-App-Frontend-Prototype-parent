@@ -28,6 +28,7 @@ const LoginScreen: React.FC = () => {
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
   });
 
   const [isSigningIn, setIsSigningIn] = React.useState(false);
