@@ -25,6 +25,12 @@
     "plugins": [
       "expo-web-browser",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0081d568-4c69-400a-adcf-4cba70a37ef1"
+      }
+    },
+    "owner": "raitsumugu"
   }
 }
