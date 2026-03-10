@@ -14,7 +14,6 @@ import { apiFetch } from '../../../lib/apiClient';
 
 interface TasksContentProps {
   tasks: CompletedTask[];
-  childName: string;
 }
 
 /** アコーディオン「今日の△△の終了タスク」の展開コンテンツ */

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
   Text,
   ScrollView,
   StyleSheet,
@@ -31,12 +30,10 @@ import HomeworkContent from '../components/home/sections/HomeworkContent';
 import ConfirmModal from '../components/home/modals/ConfirmModal';
 import ExtendTimeModal from '../components/home/modals/ExtendTimeModal';
 import BaseTimeModal from '../components/home/modals/BaseTimeModal';
-
-// ─── アイコン画像 ──────────────────────────────────────────────────────────────
 // Figma からエクスポートされた PNG（asset/home/images/ に配置済み）
 // ファイル名の大文字小文字は実際のファイル名に合わせること（case-sensitive 環境対応）
-const ICON_LOCK   = require('../../asset/home/images/SmileyXEyes.png');
-const ICON_UNLOCK = require('../../asset/home/images/Smiley.png');
+import ICON_LOCK from '../../asset/home/images/SmileyXEyes.png';
+import ICON_UNLOCK from '../../asset/home/images/Smiley.png';
 
 
 // ─── モーダル種別 ──────────────────────────────────────────────────────────────
@@ -62,6 +59,7 @@ const HomeScreen: React.FC = () => {
   const [homeworkImages, setHomeworkImages] = useState<HomeworkImage[]>([]);
 
   // TASK-09: GET /api/quests でタスク一覧と宿題画像を同時に取得
+  // 依存配列 [] は意図的。マウント時の1回のみ取得する設計。
   useEffect(() => {
     apiFetch<{ success: boolean; data: ApiQuest[] }>('/api/quests')
       .then((res) => {
@@ -89,6 +87,7 @@ const HomeScreen: React.FC = () => {
         const message = e instanceof Error ? e.message : 'データの取得に失敗しました。';
         Alert.alert('データ取得失敗', message);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── ゲーム管理：子供が使うたびに減算できるよう State に分離 ──
@@ -102,6 +101,7 @@ const HomeScreen: React.FC = () => {
   const [isForceLocked, setIsForceLocked] = useState<boolean>(false);
 
   // TASK-07: ゲーム状態をAPIから取得
+  // 依存配列 [] は意図的。マウント時の1回のみ取得する設計。
   useEffect(() => {
     apiFetch<{
       success: boolean;
@@ -125,6 +125,7 @@ const HomeScreen: React.FC = () => {
         const message = e instanceof Error ? e.message : 'データの取得に失敗しました。';
         Alert.alert('データ取得失敗', message);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── モーダル制御 ──
@@ -218,7 +219,7 @@ const HomeScreen: React.FC = () => {
 
         {/* ① 今日の{childName}の終了タスク ← 子供の名前を使用 */}
         <AccordionSection title={`今日の${childName}の終了タスク`}>
-          <TasksContent tasks={completedTasks} childName={childName} />
+          <TasksContent tasks={completedTasks} />
         </AccordionSection>
 
         {/* ② スマホ・ゲーム管理 */}

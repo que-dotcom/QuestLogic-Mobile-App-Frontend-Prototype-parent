@@ -51,7 +51,7 @@ const LoginScreen: React.FC = () => {
     } else if (response?.type === 'error') {
       Alert.alert('ログイン失敗', response.error?.message ?? '不明なエラーが発生しました。');
     }
-  }, [response]);
+  }, [response, signIn, setUserName]);
 
   const handleGoogleLogin = async () => {
     if (!process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB ||
