@@ -68,6 +68,9 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  if (!BASE_URL) {
+    throw new Error('.env の EXPO_PUBLIC_API_BASE_URL が未設定です。\nnpx expo start -c で再起動してください。');
+  }
   const token = await getToken();
 
   const headers: Record<string, string> = {

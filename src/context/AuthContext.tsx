@@ -131,6 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    */
   const signInWithTestApi = useCallback(async (): Promise<UserInfo> => {
     const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
+    if (!BASE_URL) {
+      throw new Error('.env の EXPO_PUBLIC_API_BASE_URL が未設定です。\nnpx expo start -c で再起動してください。');
+    }
     const user = process.env.EXPO_PUBLIC_TEST_USER ?? 'admin';
     const pass = process.env.EXPO_PUBLIC_TEST_PASS ?? '';
     const credentials = btoa(`${user}:${pass}`);
