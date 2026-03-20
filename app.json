@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#FDFDFD"
       },
-      "package": "com.raitsumugu.parentapp"
+      "package": "com.raitsumugu.parentapp",
+      "scheme": "com.raitsumugu.parentapp"
     },
     "web": {},
     "plugins": [

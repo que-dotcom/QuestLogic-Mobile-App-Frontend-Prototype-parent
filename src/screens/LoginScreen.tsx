@@ -12,12 +12,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 
 import { useAuth } from '../context/AuthContext';
 import { useAppContext, useTheme } from '../context/AppContext';
 
-// Expo Go でのリダイレクト処理を完了させる
+// ブラウザベースの OAuth セッションを正常終了させる
 WebBrowser.maybeCompleteAuthSession();
+
+const normalizeEnv = (value?: string) => value?.trim() || undefined;
 
 // ─── コンポーネント ────────────────────────────────────────────────────────────
 
@@ -25,10 +28,32 @@ const LoginScreen: React.FC = () => {
   const { signIn, signInWithTestApi } = useAuth();
   const { setUserName } = useAppContext();
   const theme = useTheme();
+  const webClientId = normalizeEnv(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
+  const iosClientId = normalizeEnv(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID);
+  const androidClientId = normalizeEnv(process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID);
+  const nativeRedirectUri = Platform.select({
+    ios: 'com.raitsumugu.parent-app:/oauthredirect',
+    android: 'com.raitsumugu.parentapp:/oauthredirect',
+    default: undefined,
+  });
+  const redirectUri = React.useMemo(
+    () =>
+      makeRedirectUri({
+        scheme: 'com.raitsumugu.parent-app',
+        path: 'oauthredirect',
+        native: nativeRedirectUri,
+      }),
+    [nativeRedirectUri],
+  );
+  const isExpoGoOAuthUnsupported =
+    Platform.OS !== 'web' && /^exp(s)?:\/\//.test(redirectUri);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    clientId: webClientId,
+    webClientId,
+    iosClientId,
+    androidClientId,
+    redirectUri,
   });
 
   const [isSigningIn, setIsSigningIn] = React.useState(false);
@@ -37,6 +62,10 @@ const LoginScreen: React.FC = () => {
   useEffect(() => {
     if (response?.type === 'success') {
       const { id_token } = response.params;
+      if (!id_token) {
+        Alert.alert('ログイン失敗', 'Google ID トークンを取得できませんでした。設定を確認してください。');
+        return;
+      }
       (async () => {
         setIsSigningIn(true);
         try {
@@ -54,11 +83,35 @@ const LoginScreen: React.FC = () => {
   }, [response, signIn, setUserName]);
 
   const handleGoogleLogin = async () => {
-    if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID === 'YOUR_WEB_CLIENT_ID_HERE') {
-      Alert.alert('設定エラー', '.env に EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID を設定してください。');
+    if (isExpoGoOAuthUnsupported) {
+      Alert.alert(
+        'Expo Go では未対応',
+        'Google ログインは OAuth リダイレクトの制約により Expo Go では検証できません。開発用ビルドか Web を利用してください。Expo Go では「開発用テストログイン」を使ってください。',
+      );
       return;
     }
+
+    const missingClientId = Platform.select({
+      ios: !iosClientId,
+      android: !androidClientId,
+      default: !webClientId,
+    });
+
+    if (missingClientId) {
+      const envKey = Platform.select({
+        ios: 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID',
+        android: 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID',
+        default: 'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
+      });
+      Alert.alert('設定エラー', `.env に ${envKey} を設定してください。`);
+      return;
+    }
+
+    if (!request) {
+      Alert.alert('Google 認証初期化失敗', 'Google 認証の初期化に失敗しました。設定を確認してください。');
+      return;
+    }
+
     await promptAsync();
   };
 
@@ -106,7 +159,7 @@ const LoginScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.googleButton, { borderColor: theme.border }]}
               onPress={handleGoogleLogin}
-              disabled={!request}
+              disabled={isSigningIn}
               activeOpacity={0.8}
             >
               {/* Google ロゴ（SVGの代わりにテキストで表現） */}
@@ -115,6 +168,12 @@ const LoginScreen: React.FC = () => {
                 Google でログイン
               </Text>
             </TouchableOpacity>
+
+            {isExpoGoOAuthUnsupported && (
+              <Text style={[styles.helperText, { color: theme.textSecondary }]}>
+                Expo Go では Google ログインを検証できません。開発用ビルドを利用してください。
+              </Text>
+            )}
 
             {/* 開発用テストログイン */}
             <TouchableOpacity
@@ -207,6 +266,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
     letterSpacing: 0.3,
+  },
+  helperText: {
+    marginTop: 12,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
 });
 
