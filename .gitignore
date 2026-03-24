@@ -1,6 +1,8 @@
 node_modules/
 .expo/
 dist/
+ios/
+android/
 
 # 環境変数
 .env
