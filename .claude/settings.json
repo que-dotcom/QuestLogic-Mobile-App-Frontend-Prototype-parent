@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m json.tool)",
+      "Bash(npx expo:*)",
+      "Bash(npx expo-doctor:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
